@@ -1,0 +1,351 @@
+﻿body {
+}
+
+.atlasTable
+{
+    width:100%;
+    font-size:0.95em;
+    color:#575757;
+    border-width:1px;
+    border:1px solid #808080;
+    border-radius:4px;
+    border-collapse:separate;
+    text-align:left;
+    box-shadow:1px 1px 1px #b9b9b9;
+    font-family:Verdana;
+}
+
+.atlasTableContainer .header
+{
+    width:100%;
+    padding:5px;
+    background-color:#64bbee;
+    color:white;
+    font-size:1.7em;
+    margin-bottom:4px;
+    text-align:left;
+    border-radius:3px;
+    box-shadow:0px 1px 1px #4f4f4f;
+}
+
+.isloading-wrapper
+{
+	background: url( 'img/239.gif' ) no-repeat;
+    background-position:center center;
+    min-height:45px;
+    width:45px;
+    top:50%;
+    margin-top:-22.5px !important;
+    position:absolute;
+    z-index:2;
+    display:inline-block;
+    margin:auto;
+}
+.isloading-overlay
+{
+    text-align:center;
+}
+
+
+    .atlasTable td
+    {
+        margin-left:0;
+        margin-right:0;
+        padding:5px;
+        border-left:1px solid #8f8f8f;
+    }
+
+        .atlasTable td:first-child
+        {
+            border-left:0;
+        }
+
+    .atlasTable tr.head
+    {
+        background-color:#3ea4e8;
+        color:white;
+        font-size:1.15em;
+    }
+
+        .atlasTable tr.head th
+        {
+            padding:8px;
+            border-left:1px solid #b2e0ff;
+        }
+            .atlasTable tr.head th:hover
+            {
+                cursor:url('img/icons/sort.png'), pointer;
+            }
+        .atlasTable tr.head th:first-child
+        {
+            border-left:0;
+        }
+
+    .atlasTable tr
+    {
+        border-width:0px 1px 0px 0px;
+    }
+    
+        .atlasTable tr:not(.head):hover
+        {
+            background-color:#46b8f2;
+            color:white;
+            transition:all 0.1s ease-in-out;
+            cursor:pointer;
+        }
+
+    .atlasTable .odd
+    {
+        background-color:#b2e0ff;
+    }
+
+
+/* ====================================================== */
+/* SYMBOLIC REPRESENTATIONS */
+/* ====================================================== */
+.active
+{
+    background-color:#82ca74;
+    color:white;
+    font-size:0.90em;
+    font-weight:600;
+    padding:2px;
+    border-radius:2px;
+    margin-left:2px;
+}
+.edit
+{
+    background-color:#82ca74;
+    color:white;
+    font-size:0.90em;
+    font-weight:600;
+    padding:2px;
+    border-radius:2px;
+    margin-left:2px;
+}
+    .edit:hover
+    {
+        background-color:#2f851e;
+    }
+
+.delete
+{
+    background-color:#dc5b5b;
+    color:white;
+    font-size:0.90em;
+    font-weight:600;
+    padding:2px;
+    border-radius:2px;
+    margin-left:2px;
+}
+    .delete:hover
+    {
+        background-color:#a40202
+    }
+
+.addButton
+{
+    border:none;
+    background-color:#408dcf;
+    color:white;
+    font-size:1.2em;
+    padding:5px;
+    border-radius:2px;
+    margin-top:6px;
+    text-shadow: 1px 1px #2c6f89;
+    box-shadow: inset 0 1px 0 rgba(256, 256, 256, .35);
+}
+    .addButton:hover
+    {
+        background-color:#1b72bb;
+        color:white;
+        transition:all 0.1s ease-in-out;
+        text-shadow: 1px 1px #41688a;
+        cursor:pointer;
+    }
+
+    .addButton:active
+    {
+        margin-top:8px;
+        background-color:#82ca74;
+    }
+
+.updating-cell
+{
+    transition:all 0.4s ease-in-out;
+    background-color:#808080;
+    color:white;
+}
+
+/* ====================================================== */
+/* FORM */
+/* ====================================================== */
+.atlasModal
+{
+    border-radius:5px;
+    background-color:white;
+    box-shadow: 0 2px 5px 2px #9a9a9a;
+    position:absolute;
+    display:none;
+    z-index:2;
+    text-align:center;
+    min-width:350px;
+}
+
+    .atlasModal .formBtn
+    {
+        border:none;
+        background-color:#767676;
+        color:white;
+        padding:2px;
+        font-size:1.2em;
+        border-radius:2px;
+        margin-top:5px;
+        margin-left:2px;
+    }
+        .atlasModal .formBtn:hover
+        {
+            background-color:#46b8f2;
+            cursor:pointer;
+        }
+
+    .atlasModal .cont
+    {
+        width:95%;
+        margin:auto;
+        height:95%;
+        margin-bottom:10px;
+    }
+
+    .atlasModal .foot
+    {
+        height:35px;
+        background-color:#ffc467;
+        border-bottom-left-radius:5px;
+        border-bottom-right-radius:5px;
+    }
+
+    .atlasModal .modalTitle
+    {
+        width:100%;
+        background-color:#3f7fb5;
+        color:white;
+        padding:7px;
+        font-size:1.7em;
+        font-weight:600;
+        border-top-left-radius:5px;
+        border-top-right-radius:5px;
+    }
+
+div.inputholder
+{
+    border: 1px solid #ccc;
+    padding: 3px;
+    border-radius: 5px;
+    background-color: white;
+    margin-top: 5px;
+    transition:all 1s;
+    text-align:left;
+    width:100%;
+}
+div.inputholderhalf
+{
+    width:49.5% !important;
+    float:left;
+    margin-left:2px;
+}
+
+    div.inputholderhalf label
+    {
+        min-width:80px !important;
+    }
+    div.inputholderhalf input[type='text']
+    {
+        min-width:120px !important;
+    }
+
+    div.inputholder input[type='text']
+    {
+        border: none;
+        margin-left: 10px;
+        height:22px;
+        font-size:1.1em;
+        transition:all 0.5s;
+        width:50%;
+        background-color:#f7f7f7;
+        padding-left:3px;
+    }
+        div.inputholder input[type='text']:disabled
+        {
+            background:none;
+            color:#3f7fb5;
+        }
+    div.inputholder input[type='checkbox']
+    {
+        margin-left:10px;
+        background:none;
+    }
+    div.inputholder input[type='text']:focus
+    {
+        outline:none;
+    }
+
+        div.inputholder input[type='button']
+        {
+            min-width:80px;
+            font-size:0.8em;
+            height:15px;
+            background:none;
+            color:#44a6ef;
+            transition:all 0.3s;
+            padding:0px !important;
+            text-align:left;
+            margin-left:0px;
+            border:none;
+
+        }
+            div.inputholder input[type='button']:hover
+            {
+                color:#ff8400;
+                cursor:pointer;
+            }
+
+div.inputholder label
+{
+    font-family: arial;
+    font-size: 1.02em;
+    color: #ffa220;
+    min-width:100px;
+    display:inline-block;
+}
+div.inputholder span
+{
+    position:absolute;
+    right:10px;
+    top:7px;
+    color:red;
+}
+
+::-webkit-input-placeholder
+{
+    color: #3f7fb5;
+    opacity: 0.4;
+}
+
+:-moz-placeholder
+{ /* Firefox 18- */
+    color: #3f7fb5;
+    opacity: 0.4;
+}
+
+::-moz-placeholder
+{ /* Firefox 19+ */
+    color: #3f7fb5;
+    opacity: 0.4;
+}
+
+:-ms-input-placeholder
+{
+    color: #3f7fb5;
+    opacity: 0.4;
+}
