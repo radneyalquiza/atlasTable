@@ -13,3 +13,5 @@ This currently has styling and event features including:
   5. Toggable "Action" buttons like Edit/Delete.
   6. Adding records.
   7. Dynamically created form input fields depending on options passed.
+
+***This readme file and others will be updated regularly, but you're welcome to test the plugin out***
