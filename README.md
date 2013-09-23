@@ -3,6 +3,8 @@ atlasTable
 
 A jQuery plugin for creating real-time CRUD tables, relying on AJAX requests
 
+*** DEMO AND DOCUMENTATION COMING SOON***
+
 
 NOTE: This is still an alpha version of the plugin.
 This currently has styling and event features including:
