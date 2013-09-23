@@ -15,3 +15,5 @@ This currently has styling and event features including:
   7. Dynamically created form input fields depending on options passed.
 
 ***This readme file and others will be updated regularly, but you're welcome to test the plugin out***
+
+***If you have questions and/or suggestions, please contact me via Email (contact@aaronalquiza.com)***
