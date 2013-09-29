@@ -1,52 +1,52 @@
 ﻿// ========================================================================================== //
-//  Atlas Table (v0.1)
+//  Atlas Table (v0.6)
 //  by Radney Aaron Alquiza
-//  Sept 20, 2013
+//  Sept 28, 2013
 // ========================================================================================== //
 
-// a table plugin that will be applied to either JSON data or a table element
-// passed into it
+// Atlas Table is a table plugin that will be applied to either local JSON data or remotely AJAX'd data
+// passed into it. The plugin will enable adding, deleting, editing records onto the data source and
+// visually to the table.
 
+// included plugin: AtlasAjaxOverlay for displaying a loading animation while loading data
 
 // the user must initialize a container(div,etc) that will contain the table
+// initialization samples will be provided in the README.
 
 (function ($) {
 
     // default settings
     var tablesettings = {
-        containerWidth: '300',
-        defaultData: null,
-        header: 'Default',
-        showHeader: true,
-        showInlineControls: true,
-        displayAmount: 10,
-        editable: true,
-        showColumnHeaders: true,
-        addFcn: null,
-        editFcn: null,
-        deleteUrl: '',
-        getAllUrl: '',
-        getOneUrl: '',
-        saveOneUrl: '',
-        addOneUrl: '',
-        ajaxSettings: { dataType:'json', type:'GET', async:false },
-        formFields: {},
-        thisobject: null,
-        currentRow: "",
-        modalCover: '<div class="cover"></div>'
+        containerWidth: 85,             // width of the container in % relative to its parent
+        defaultData: null,              // JSON data (can be supplied through JS or parsed through AJAX)
+        header: 'Default',              // text for the header
+        showHeader: true,               // show the top header for the table (not the columns)
+        showInlineControls: true,       // show EDIT/DELETE in each record row
+        displayAmount: 10,              // TO BE IMPLEMENTED: display number of records per page
+        editable: false,                // will enable editing the records (add, edit, delete)
+        useRemoteDataSource: true,      // true: will use JSON parsed by AJAX, false: will use user given JSON
+        showColumnHeaders: true,        // show the column headers
+        hiddenColumns: [],              // this will decide which columns are hidden
+        recordSearchItem: '',           // this will be the primary key for database search (defaults to the first column)
+        deleteOneUrl: '',               // the web method / service url that will delete a record
+        getAllUrl: '',                  // the web method / service url that will get all records
+        getOneUrl: '',                  // the web method / service url that will get 1 record
+        saveOneUrl: '',                 // the web method / service url that will update 1 record
+        addOneUrl: '',                  // the web method / service url that will add 1 record
+        ajaxSettings: { dataType:'json', type:'GET', async:true },  // ajax settings 
+        formFields: {},                 // dynamically generated modal form fields
+        onComplete: null                // callback (this)
     };
 
     $.fn.atlasTable = function (options_or_method, otherparams) {
-
-        if (tablesettings.editable == true)
-            $('body').append(tablesettings.modalCover);  // to cover the modal
-
+        
         var domelement = null;
         if (methods != null) {
             // if the parameter passed is nothing or a javascript object
             if (otherparams == null && options_or_method == null || (typeof options_or_method === 'object' && options_or_method != null)) {
                 if (domelement == null) {
-                    tablesettings = $.extend(tablesettings, options_or_method);
+                    //tablesettings = $.extend({}, tablesettings, options_or_method);
+                    this.data('tablesettings', $.extend({}, tablesettings, options_or_method));
                     domelement = methods['initialize'](this, options_or_method);
                 }
                 return domelement;
@@ -68,74 +68,128 @@
     // =====================================================================
     
     // initialize the table's interactivity
-    function addEvents(object) {
-        var table = $(object).find('table');
-        table.addClass('atlasTable');
-        table.find('tr:odd').addClass('odd');
+    function addEvents(settings, row) {
+        var table = settings.thisobject.find('table');
+        var rows;
+
+        if (row == null) {
+            if (settings.showInlineControls == false)
+                rows = $(table).find('tr:not(.head):not(.no-data)');
+            else
+                rows = $(table).find('.edit');
+        }
+        else
+            rows = row;
+
+        if (settings.showHeader == true) {
+            settings.thisobject.find('.atlasTableContainer').find('.tableToggle').click(function () {
+                settings.thisobject.find('.atlasTable').toggle();
+                settings.thisobject.find('.addButton').toggle();
+            });
+        }
 
         // if the table isn't showing inline controls, clicking on
         // a record will open its editable view
-        if (tablesettings.showInlineControls == false) {
-            if (tablesettings.editable) {
-                $(table).find('tr:not(.head)').click(function () {
-                    tablesettings.thisobject.data('saveMode', 'update');
+        if (settings.showInlineControls == false) {
+            if (settings.editable) {
+                rows.click(function () {
+                    settings.thisobject.data('saveMode', 'update');
                     var thisob = $(this).parents('table');
-                    var rowid = $(this).attr('id');
-
-                    thisob.isLoading({ position: "overlay" });
+                    var rowid = $(this).data('id');
+                    console.log('test1');
+                    //thisob.isLoading({ position: "overlay" });
+                    settings.thisobject.atlasAjaxOverlay();
+                    settings.thisobject.atlasAjaxOverlay('show');
                     
                     setTimeout(function () {
-                        fillForm(getOne(rowid));
+                        fillForm(getOne(rowid, settings), settings);
                         positionModal($('.atlasModal'));//$(this).attr('id'));
                         $('.cover').fadeIn(100);
-                        thisob.isLoading("hide");
+                        settings.thisobject.atlasAjaxOverlay('hide');
                     }, 600);
                 });
             }
         }
         else {
-            $(table).find('.edit').click(function () {
-                tablesettings.thisobject.data('saveMode', 'update');
+            rows.click(function () {
+                console.log('test2');
+                settings.thisobject.data('saveMode', 'update');
                 var thisob = $(this).parents('table');
-                var rowid = $(this).parents('tr').attr('id');
+                var rowid = $(this).parents('tr').data('id');
 
-                thisob.isLoading({ position: "overlay" });
+                settings.thisobject.atlasAjaxOverlay();
+                settings.thisobject.atlasAjaxOverlay('show');
 
                 setTimeout(function () {
-                    fillForm(getOne(rowid));
-                    positionModal($('.atlasModal'));//$(this).attr('id'));
+                    fillForm(getOne(rowid, settings), settings);
+                    positionModal($('.atlasModal'));
                     $('.cover').fadeIn(100);
-                    thisob.isLoading("hide");
+                    settings.thisobject.atlasAjaxOverlay('hide');
                 }, 600);
             });
         }
 
-        // adding new record
-        $('.addButton').click(function () {
-            tablesettings.thisobject.data('saveMode', 'add');
-            clearForm();
-            positionModal($('.atlasModal'));
-            $('.cover').fadeIn(100);
+        $('.delete').click(function () {
+            var id = $(this).data('id');
+
+            if (confirm('Are you sure you want to delete this record?')) {
+                deleteRow(id, settings);
+                style(settings);
+            }
+            return false;
         });
 
-        // form interaction
-        $('.formBtn.close').click(function () {
-            $(this).parents('.atlasModal').hide();
-            clearForm();
-            $('.cover').hide();
+        // add form events if there is no row passed (modify whole table)
+        if (row == null) { 
+            // adding new record
+            $('.addButton').click(function () {
+                settings.thisobject.data('saveMode', 'add');
+                clearForm();
+                positionModal($('.atlasModal'));
+                $('.cover').fadeIn(100);
+            });
+
+            // form interaction
+            $('.formBtn.close').click(function () {
+                removeModal($(this), settings);
+            });
+
+            $('.formBtn.save').click(function () {
+                submitForm(settings);
+            });
+
+        }
+        // keyboard shortcut for escape (to remove the modal)
+        var down = [];
+        $(document).keydown(function (e) {
+            down[e.keyCode] = true;
+        }).keyup(function (e) {
+            if (down[27]) {
+                removeModal(null, settings);
+            }
+            down[e.keyCode] = false;
         });
 
-        $('.formBtn.save').click(function () {
-            submitForm();
-        });
     }
-   
+
+    // hide the modal being shown
+    function removeModal(refBtn, settings) {
+        if (refBtn != null) {
+            $(refBtn).parents('.atlasModal').hide();
+        }
+        else
+            settings.thisobject.find('.atlasModal').hide();
+        clearForm();
+        $('.cover').hide();
+    }
+       
     // dynamically position and animate the modal form
     function positionModal(object) {
         var width = object.width();
         var height = object.height();
         object.css('left', '50%').css('margin-left', "-" + width / 2 + "px");
         object.css('top', '50%').css('margin-top', "-" + height / 2 + "px");
+        object.css('z-index', '11');
         object.fadeIn(100);
     }
 
@@ -148,12 +202,12 @@
     }
 
     // call the main GETTER function to get data to populate the table
-    function getAll() {
+    function getAll(settings) {
         var tabledata;
             $.ajax({
-                url: tablesettings.getAllUrl,
-                type: tablesettings.ajaxSettings.type,
-                dataType: tablesettings.ajaxSettings.dataType,
+                url: settings.getAllUrl,
+                type: settings.ajaxSettings.type,
+                dataType: settings.ajaxSettings.dataType,
                 async: false,
                 contentType: 'application/json; charset=utf-8',
                 success: function (msg) {
@@ -166,6 +220,7 @@
                 },
                 error: function (msg) {
                     alert("Data wasn't received.");
+                    location.reload(true);
                 }
             });
         return tabledata;
@@ -174,45 +229,64 @@
     // utility build table
     // receive: array of data objects
     // return: text of table
-    function buildTable(data) {
-
-        var table = "<div class='atlasTableContainer'>";
-        if (tablesettings.showHeader == true)
-            table += "<div class='header'>" + tablesettings.header + "</div>";
+    function buildTable(settings) {
         
-        table+="<table cellspacing='0' cellpadding='0' border='0'><thead>";
+        var table = "<table cellspacing='0' cellpadding='0' border='0'>";
         
-        if (tablesettings.showColumnHeaders == true)
-            table += "<tr class='head'>";
-        var obsample = tablesettings.defaultData[0];
-        var thead = new Array();
-        for (var o in obsample) {
-            if (tablesettings.showColumnHeaders == true)
-                table += "<th>" + o + "</th>";
-            thead.push(o);
+        if (settings.showColumnHeaders == true)
+            table += "<thead><tr class='head'>";
+
+        if (settings.defaultData.length > 0) {
+            var obsample = settings.defaultData[0];
+            var thead = new Array();
+            for (var o in obsample) {
+                if (settings.showColumnHeaders == true) {
+                    if (settings.hiddenColumns.indexOf(o) < 0) {
+                        table += "<th>" + o + "</th>";
+                    }
+                }
+                thead.push(o);
+            }
+
+            if (settings.showColumnHeaders == true) {
+                if (settings.showInlineControls == true)
+                    table += "<th>Actions</th>";
+                else
+                    table += "<th></th>";
+                table += "</tr></thead>";
+            }
+
+            table += "<tbody>";
+
+            settings.columnHeaders = thead; // create the column headers so we can use somewhere else
+            var flag = false;
+            var primary;
+
+            for (var i = 0; i < settings.defaultData.length; i++) {
+                var ob = settings.defaultData[i];
+                if (settings.recordSearchItem != '' )
+                    primary = settings.recordSearchItem;
+                else
+                    primary = thead[0];
+                table += "<tr data-id='" + ob[primary] + "'>";
+                for (var o = 0; o < thead.length; o++) {
+                    if (settings.hiddenColumns.indexOf(thead[o]) < 0) {
+                        table += "<td class='" + thead[o] + "'>" + ob[thead[o]];
+                        table += "</td>";
+                    }
+                }
+                if (settings.showInlineControls == true)
+                    table += "<td class='table-action'><span class='edit'></span><span class='delete' data-id='" + ob[thead[0]] + "'></span></td>";
+                else
+                    table += "<td><span class='delete' data-id='" + ob[thead[0]] + "'></span></td></tr>";
+            }
+        }
+        else {
+            table += "<tbody><tr class='no-data'><td>No data available from the database. Why not add some?</td></tr>";
         }
 
-        if (tablesettings.showColumnHeaders == true) {
-            if (tablesettings.showInlineControls == true)
-                table += "<th>Actions</th>";
-            table += "</tr></thead>";
-        }
+        table += "</tbody></table><input type='button' class='addButton' />";
 
-        table += "<tbody>";
-
-        for (var i = 0; i < tablesettings.defaultData.length; i++) {
-            var ob = tablesettings.defaultData[i];
-            table += "<tr id='" + ob[thead[0]] + "'>";
-            for (var o = 0; o < thead.length; o++)
-                table += "<td class='" + thead[o] + "'>" + ob[thead[o]] + "</td>";
-            if (tablesettings.showInlineControls == true)
-                table += "<td class='table-action'><span class='edit'>Edit</span><span class='delete'>Delete</span></td>";
-            table += "</tr>";
-        }
-
-        table += "</tbody></table><input type='button' class='addButton' value='Add Record'/>";
-
-        table += "</div>";
         return table;
     }
 
@@ -253,18 +327,20 @@
         });
         form += fields + "</div>";
         form += "<div class='foot'><input type='button' class='formBtn close' value='Close' />";
-        form += "<input type='button' class='formBtn save' value='Save' /></div></div><div class='cover'></div>";
+        form += "<input type='button' class='formBtn save' value='Save' /></div></div>";
+        $('html').append('<div class="cover"></div>');
+
         return form;
     }
 
     // get 1 record
-    function getOne(id) {
+    function getOne(id, settings) {
         var singledata;
-        tablesettings.currentRow = id;
+        settings.currentRow = id;
         $.ajax({
-            url: tablesettings.getOneUrl,
+            url: settings.getOneUrl,
             type: 'POST',
-            dataType: tablesettings.ajaxSettings.dataType,
+            dataType: settings.ajaxSettings.dataType,
             data: "{ 'id' : '" + id + "'}",
             async: false,
             cache: false,
@@ -286,8 +362,8 @@
 
 
     // fill information on edit form
-    function fillForm(data) {
-        $.each(tablesettings.formFields, function (idx, val) {
+    function fillForm(data, settings) {
+        $.each(settings.formFields, function (idx, val) {
             if (val.type == 'checkbox' && val.hasOwnProperty('states')) {
                 if (data[idx] == val['states']['checked'])
                     $('#' + val.domid).prop('checked', true);
@@ -299,27 +375,28 @@
     }
 
     // collect data according to formFields and save the data
-    function submitForm() {
+    function submitForm(settings) {
         var data = {};
-        $.each(tablesettings.formFields, function (idx, val) {
-            if (tablesettings.thisobject.data('saveMode') == 'update') {
+
+        $.each(settings.formFields, function (idx, val) {
+            if (settings.thisobject.data('saveMode') == 'update') {
                     if ($('#' + val.domid).attr('type') != 'checkbox')
                         data[idx] = $('#' + val.domid).val();
                     else {
                         var chk = $('#' + val.domid).prop('checked');
-                        if (chk == true) chk = tablesettings.formFields[idx].states['checked'];
-                        else chk = tablesettings.formFields[idx].states['unchecked'];
+                        if (chk == true) chk = settings.formFields[idx].states['checked'];
+                        else chk = settings.formFields[idx].states['unchecked'];
                         data[idx] = chk;
                     }
             }
             else {
-                if (!tablesettings.formFields[idx].hasOwnProperty('notForAdd')) {
+                if (!settings.formFields[idx].hasOwnProperty('notForAdd')) {
                     if ($('#' + val.domid).attr('type') != 'checkbox')
                         data[idx] = $('#' + val.domid).val();
                     else {
                         var chk = $('#' + val.domid).prop('checked');
-                        if (chk == true) chk = tablesettings.formFields[idx].states['checked'];
-                        else chk = tablesettings.formFields[idx].states['unchecked'];
+                        if (chk == true) chk = settings.formFields[idx].states['checked'];
+                        else chk = settings.formFields[idx].states['unchecked'];
                         data[idx] = chk;
                     }
                 }
@@ -328,11 +405,12 @@
 
         var saveurl;
 
-        if (tablesettings.thisobject.data('saveMode') == 'update')
-            saveurl = tablesettings.saveOneUrl;
+        if (settings.thisobject.data('saveMode') == 'update')
+            saveurl = settings.saveOneUrl;
         else
-            saveurl = tablesettings.addOneUrl;
-
+            saveurl = settings.addOneUrl;
+        settings.thisobject.find('.atlasModal .cont').atlasAjaxOverlay();
+        settings.thisobject.find('.atlasModal .cont').atlasAjaxOverlay('show');
         setTimeout(function () {
             $.ajax({
                 type: 'POST',
@@ -341,20 +419,40 @@
                 data: JSON.stringify(data),
                 dataType: 'json',
                 async: false,
-                success: function (msg1) {
-                    tablesettings.thisobject.find('.atlasModal').fadeOut(200);
+                success: function (returndata) {
+
+                    if (returndata.hasOwnProperty('d'))
+                        returndata = returndata.d;
+                    settings.thisobject.find('.atlasModal .cont').atlasAjaxOverlay('hide');
+                    settings.thisobject.find('.atlasModal').fadeOut(200);
                     $(".cover").fadeOut(200);
-                    setTimeout(function () {updateRow(true, data)}, 800);
-                    setTimeout(function () {updateRow(false, data)}, 1600);
+                    if (settings.thisobject.data('saveMode') == 'update') {
+                        setTimeout(function () { updateRow(true, data, settings) }, 800);
+                        setTimeout(function () { updateRow(false, data, settings) }, 1600);
+                    }
+                    else {
+                        var newrow;
+                        setTimeout(function () { newrow = addRow(true, returndata, settings) }, 900);
+                        setTimeout(function () { addRow(false, newrow, settings) }, 1800);
+                    }
                 }
             });
         }, 100);
     }
 
     // update the row being displayed that was edited
-    function updateRow(state, data) {
-        var updaterow = tablesettings.thisobject.find('.atlasTable').find('tr#' + tablesettings.currentRow);
+    function updateRow(state, data, settings) {
+        var rows = settings.thisobject.find('.atlasTable').find('tr:not(.head)');
+        var updaterow;
+
+        $.each(rows, function() {
+            if ($(this).data('id') == settings.currentRow)
+                updaterow = $(this);
+        });
+        
         if (state == true) {
+            // this modifies the data with a new data, and shows a orange glow
+            // NOTE: update with CSS KEYFRAME ANIMATIONS to not call this method twice
             $.each(updaterow.children('td'), function () {
                 if ($(this).attr('class') != 'table-action') {
                     $(this)
@@ -366,6 +464,7 @@
             });
         }
         else {
+            // this just basically removes the orange glow
             $.each(updaterow.children('td'), function () {
                 if ($(this).attr('class') != 'table-action') {
                     $(this).removeAttr('style');
@@ -374,23 +473,120 @@
         }
     }
 
-    // load data to table
-    function loadTable() {
-        var table;
-        tablesettings.thisobject.isLoading({
-            position: "overlay"
-        });
-        setTimeout(function () { 
-            if (tablesettings.getAllUrl != "") {
-                tablesettings.defaultData = getAll();
+    // add the new row that has been added; to the end
+    function addRow(state, data, settings) {
+        var samplerow = settings.thisobject.find('.atlasTable').find('tr:not(.head)')[0];
+        var newrow = "<tr";
+        var first = false;
+        if (state == true) {
+            if (settings.thisobject.find('.atlasTable').find('tr:not(.head)') > 1) {
+                // this modifies the data with a new data, and shows a orange glow
+                // NOTE: update with CSS KEYFRAME ANIMATIONS to not call this method twice
+                $.each($(samplerow).children('td'), function () {
+                    if (!first) {
+                        newrow += " data-id='" + data[$(this).attr('class')] + "'>";
+                        first = true;
+                    }
+                    newrow += "<td class='" + $(this).attr('class') + "'>" + data[$(this).attr('class')];
+                    if (settings.showInlineControls == true)
+                        newrow += "<td class='table-action'><span class='edit'>Edit</span><span class='delete'>Delete</span></td>";
+                    newrow += "</td>";
+                });
+                settings.thisobject.find('.atlasTable').append(newrow);
+
+                var addedrow = settings.thisobject.find('.atlasTable').find('tr:last-child');
+                $(addedrow).focus();    // focus on the newly added row
+                addEvents(settings, addedrow);
+                $.each($(addedrow).children('td'), function () { // animate by adding the orange glow
+                    if ($(this).attr('class') != 'table-action') {
+                        $(this)
+                            .css('transition', 'all 0.3s ease-In-Out')
+                            .css('background-color', '#ffbc83')
+                            .css('pointer-events', 'none')
+                            .html(data[$(this).attr('class')]);
+                    }
+                });
+                return $(addedrow);  // i wont need to do this if im doing keyframes
             }
-            table = buildTable(tablesettings.defaultData);
-            tablesettings.thisobject.append(table);
-            if (tablesettings.editable)
-                tablesettings.thisobject.append(createForm(tablesettings.formFields));
-            addEvents(tablesettings.thisobject);
-            tablesettings.thisobject.isLoading("hide");
-        }, 800);
+            else
+                location.reload(true);
+        }
+        else {
+            // this just basically removes the orange glow
+            $.each($(data).children('td'), function () {
+                if ($(this).attr('class') != 'table-action') {
+                    $(this).removeAttr('style');
+                }
+            });
+        }
+    }
+
+    // delete a record
+    function deleteRow(id, settings) {
+        $.ajax({
+            url: settings.deleteOneUrl,
+            type: 'POST',
+            dataType: settings.ajaxSettings.dataType,
+            data: '{ "CustomerID":"' + id + '"}',
+            contentType: 'application/json; charset=utf-8',
+            success: function (msg) {
+                var rows = settings.thisobject.find('.atlasTable').find('tr:not(.head)');
+                $.each(rows, function () {
+                    if ($(this).data('id') == id) { $(this).remove(); }
+                });
+                var rows = settings.thisobject.find('.atlasTable').find('tr:not(.head)');
+                if (rows.length < 1) {
+                    settings.thisobject.find('.atlasTable').find('tr').remove();
+                    settings.thisobject.find('.atlasTable').append("<tr class='no-data'><td>No data available from the database.</td></tr>");
+                }
+            },
+            error: function (msg) {
+                alert("Error: Delete record");
+            }
+        });
+    }
+
+    // load data to table
+    function loadTable(settings) {
+        var table;
+        table = "<div class='atlasTableContainer'>";
+        if (settings.showHeader == true)
+            table += "<div class='header'>" + settings.header + "<span class='tableToggle'></span></div>";
+        table += "</div>";
+
+        settings.thisobject.append(table);
+
+        settings.thisobject.atlasAjaxOverlay();
+        settings.thisobject.atlasAjaxOverlay('show');
+
+        table = "";
+
+        setTimeout(function () { 
+            if (settings.getAllUrl != "" && settings.useRemoteDataSource == true) {
+                settings.defaultData = getAll(settings);
+            }
+            table = buildTable(settings);
+            settings.thisobject.find('.atlasTableContainer').append(table);
+            table = settings.thisobject.find('.atlasTableContainer').find('table');
+
+            if (settings.editable && settings.formFields != null)
+                settings.thisobject.append(createForm(settings.formFields));
+            if (settings.editable && settings.formFields != null)
+                addEvents(settings, null);
+
+            style(settings);
+
+            settings.thisobject.atlasAjaxOverlay('hide');
+            if ($.isFunction(settings.onComplete))
+                settings.onComplete.call(settings.thisobject);
+
+            settings.thisobject.find('.atlasTable').fadeIn(300);
+        }, 300);
+    }
+
+    function style(settings) {
+        settings.thisobject.find('.atlasTableContainer').find('table').addClass('atlasTable');
+        settings.thisobject.find('.atlasTable').find('tr:odd').addClass('odd');
     }
     
     var methods = {
@@ -400,12 +596,16 @@
         initialize: function (object, options) {
 
             return object.each(function () {
-                // this is the container element
-                tablesettings.thisobject = $(this);
-                loadTable();
+                var settings = $(this).data('tablesettings');
+                settings.thisobject = $(this);
+                $(this).css('width', settings.containerWidth + "%");
+                if (settings.containerWidth < 100)
+                    $(this).css('margin', 'auto');
+                loadTable(settings);
 
                 // bind the jquery reference to the element (the div or any container)
-                $(this).data('data', tablesettings.thisobject);
+                $(this).data('data', settings.thisobject);
+                
             });
         },
 
