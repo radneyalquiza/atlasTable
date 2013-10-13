@@ -1,7 +1,12 @@
 ﻿// ========================================================================================== //
 //  Atlas Table (v0.6)
 //  by Radney Aaron Alquiza
-//  Sept 28, 2013
+//  v0.1 - Sept 12, 2013
+//  v0.2 - Sept 13, 2013
+//  v0.4 - Sept 17, 2013
+//  v0.5 - Sept 22, 2013
+//  v0.6 - Sept 28, 2013
+//  (no changelog available/important until v1.0)
 // ========================================================================================== //
 
 // Atlas Table is a table plugin that will be applied to either local JSON data or remotely AJAX'd data
@@ -13,33 +18,39 @@
 // the user must initialize a container(div,etc) that will contain the table
 // initialization samples will be provided in the README.
 
+// TO BE ADDED:
+// -Sorting
+// -Search
+// -Paging
+
 (function ($) {
 
-    // default settings
-    var tablesettings = {
-        containerWidth: 85,             // width of the container in % relative to its parent
-        defaultData: null,              // JSON data (can be supplied through JS or parsed through AJAX)
-        header: 'Default',              // text for the header
-        showHeader: true,               // show the top header for the table (not the columns)
-        showInlineControls: true,       // show EDIT/DELETE in each record row
-        displayAmount: 10,              // TO BE IMPLEMENTED: display number of records per page
-        editable: false,                // will enable editing the records (add, edit, delete)
-        useRemoteDataSource: true,      // true: will use JSON parsed by AJAX, false: will use user given JSON
-        showColumnHeaders: true,        // show the column headers
-        hiddenColumns: [],              // this will decide which columns are hidden
-        recordSearchItem: '',           // this will be the primary key for database search (defaults to the first column)
-        deleteOneUrl: '',               // the web method / service url that will delete a record
-        getAllUrl: '',                  // the web method / service url that will get all records
-        getOneUrl: '',                  // the web method / service url that will get 1 record
-        saveOneUrl: '',                 // the web method / service url that will update 1 record
-        addOneUrl: '',                  // the web method / service url that will add 1 record
-        ajaxSettings: { dataType:'json', type:'GET', async:true },  // ajax settings 
-        formFields: {},                 // dynamically generated modal form fields
-        onComplete: null                // callback (this)
-    };
 
     $.fn.atlasTable = function (options_or_method, otherparams) {
-        
+
+        // default settings
+        var tablesettings = {
+            containerWidth: 90,             // width of the container in % relative to its parent
+            defaultData: null,              // JSON data (can be supplied through JS or parsed through AJAX)
+            header: 'Default',              // text for the header
+            showHeader: true,               // show the top header for the table (not the columns)
+            showInlineControls: true,       // show EDIT/DELETE in each record row
+            displayAmount: 15,              // TO BE IMPLEMENTED: display number of records per page
+            editable: false,                // will enable editing the records (add, edit, delete)
+            useRemoteDataSource: true,      // true: will use JSON parsed by AJAX, false: will use user given JSON
+            showColumnHeaders: true,        // show the column headers
+            hiddenColumns: [],              // this will decide which columns are hidden
+            recordSearchItem: '',           // this will be the primary key for database search (defaults to the first column)
+            deleteOneUrl: '',               // the web method / service url that will delete a record
+            getAllUrl: '',                  // the web method / service url that will get all records
+            getOneUrl: '',                  // the web method / service url that will get 1 record
+            saveOneUrl: '',                 // the web method / service url that will update 1 record
+            addOneUrl: '',                  // the web method / service url that will add 1 record
+            ajaxSettings: { dataType: 'json', type: 'GET', async: true },  // ajax settings 
+            formFields: {},                 // dynamically generated modal form fields
+            onComplete: null                // callback (this)
+        };
+
         var domelement = null;
         if (methods != null) {
             // if the parameter passed is nothing or a javascript object
@@ -94,16 +105,16 @@
             if (settings.editable) {
                 rows.click(function () {
                     settings.thisobject.data('saveMode', 'update');
+                    settings.thisobject.find('.atlasModal').find('.modalTitle').children('span').html('Edit Record');
                     var thisob = $(this).parents('table');
                     var rowid = $(this).data('id');
-                    console.log('test1');
                     //thisob.isLoading({ position: "overlay" });
                     settings.thisobject.atlasAjaxOverlay();
                     settings.thisobject.atlasAjaxOverlay('show');
                     
                     setTimeout(function () {
                         fillForm(getOne(rowid, settings), settings);
-                        positionModal($('.atlasModal'));//$(this).attr('id'));
+                        positionModal(settings.thisobject.find('.atlasModal'));//$(this).attr('id'));
                         $('.cover').fadeIn(100);
                         settings.thisobject.atlasAjaxOverlay('hide');
                     }, 600);
@@ -112,8 +123,8 @@
         }
         else {
             rows.click(function () {
-                console.log('test2');
                 settings.thisobject.data('saveMode', 'update');
+                settings.thisobject.find('.atlasModal').find('.modalTitle').children('span').html('Edit Record');
                 var thisob = $(this).parents('table');
                 var rowid = $(this).parents('tr').data('id');
 
@@ -122,39 +133,60 @@
 
                 setTimeout(function () {
                     fillForm(getOne(rowid, settings), settings);
-                    positionModal($('.atlasModal'));
+                    positionModal(settings.thisobject.find('.atlasModal'));
                     $('.cover').fadeIn(100);
                     settings.thisobject.atlasAjaxOverlay('hide');
                 }, 600);
             });
         }
 
-        $('.delete').click(function () {
+        // delete handler
+        settings.thisobject.find('.delete').click(function () {
             var id = $(this).data('id');
 
             if (confirm('Are you sure you want to delete this record?')) {
                 deleteRow(id, settings);
-                style(settings);
             }
             return false;
         });
 
+        var pagelist = settings.thisobject.find('.atlasTableContainer .page-counter').find('ul').find('li');
+        console.log(pagelist.length);
+        $.each(pagelist, function () {
+            if (!isNaN($(this).html())) {
+                $(this).click(function () {
+                    var page = parseInt($(this).html()) - 1;
+                    if (settings.currentPage != page) {
+                        for (var i = 0; i < settings.rows.length; i++)
+                            $(settings.rows[i]).hide();
+                        $(settings.rows[page]).show();
+                        settings.currentPage = page;
+                    }
+                    else console.log('you re on the same page');
+                });
+            }
+        });
+
+
         // add form events if there is no row passed (modify whole table)
         if (row == null) { 
             // adding new record
-            $('.addButton').click(function () {
+            settings.thisobject.find('.addButton').click(function () {
                 settings.thisobject.data('saveMode', 'add');
-                clearForm();
-                positionModal($('.atlasModal'));
+                settings.thisobject.find('.atlasModal').find('.modalTitle').children('span').html('Add Record');
+                clearForm(settings);
+                console.log(settings.thisobject.find('.atlasModal'));
+                positionModal(settings.thisobject.find('.atlasModal'));
                 $('.cover').fadeIn(100);
+
             });
 
             // form interaction
-            $('.formBtn.close').click(function () {
+            settings.thisobject.find('.formBtn.close').click(function () {
                 removeModal($(this), settings);
             });
 
-            $('.formBtn.save').click(function () {
+            settings.thisobject.find('.formBtn.save').click(function () {
                 submitForm(settings);
             });
 
@@ -179,7 +211,7 @@
         }
         else
             settings.thisobject.find('.atlasModal').hide();
-        clearForm();
+        clearForm(settings);
         $('.cover').hide();
     }
        
@@ -194,11 +226,11 @@
     }
 
     // clear values in all fields in the modal form
-    function clearForm() {
-        $('.atlasModal').find('input[type="text"]').val("");
-        $('.atlasModal').find('select').val("");
-        $('.atlasModal').find('input[type="checkbox"]').prop('checked', false);
-        $('.atlasModal').find('input[type="hidden"]').val("");
+    function clearForm(settings) {
+        settings.thisobject.find('.atlasModal').find('input[type="text"]').val("");
+        settings.thisobject.find('.atlasModal').find('select').val("");
+        settings.thisobject.find('.atlasModal').find('input[type="checkbox"]').prop('checked', false);
+        settings.thisobject.find('.atlasModal').find('input[type="hidden"]').val("");
     }
 
     // call the main GETTER function to get data to populate the table
@@ -220,7 +252,7 @@
                 },
                 error: function (msg) {
                     alert("Data wasn't received.");
-                    location.reload(true);
+                    //location.reload(true);
                 }
             });
         return tabledata;
@@ -262,7 +294,7 @@
             var flag = false;
             var primary;
 
-            for (var i = 0; i < settings.defaultData.length; i++) {
+            for (var i = 0; i < (settings.defaultData.length); i++) {
                 var ob = settings.defaultData[i];
                 if (settings.recordSearchItem != '' )
                     primary = settings.recordSearchItem;
@@ -527,7 +559,7 @@
             url: settings.deleteOneUrl,
             type: 'POST',
             dataType: settings.ajaxSettings.dataType,
-            data: '{ "CustomerID":"' + id + '"}',
+            data: '{ "ID":"' + id + '"}',
             contentType: 'application/json; charset=utf-8',
             success: function (msg) {
                 var rows = settings.thisobject.find('.atlasTable').find('tr:not(.head)');
@@ -539,6 +571,7 @@
                     settings.thisobject.find('.atlasTable').find('tr').remove();
                     settings.thisobject.find('.atlasTable').append("<tr class='no-data'><td>No data available from the database.</td></tr>");
                 }
+                style(settings, true);
             },
             error: function (msg) {
                 alert("Error: Delete record");
@@ -569,26 +602,93 @@
             settings.thisobject.find('.atlasTableContainer').append(table);
             table = settings.thisobject.find('.atlasTableContainer').find('table');
 
+            style(settings, false);
+
             if (settings.editable && settings.formFields != null)
                 settings.thisobject.append(createForm(settings.formFields));
             if (settings.editable && settings.formFields != null)
                 addEvents(settings, null);
 
-            style(settings);
+            
+            console.log($("#area"));
 
             settings.thisobject.atlasAjaxOverlay('hide');
             if ($.isFunction(settings.onComplete))
                 settings.onComplete.call(settings.thisobject);
 
             settings.thisobject.find('.atlasTable').fadeIn(300);
+            activatEvents(settings);
         }, 300);
     }
 
-    function style(settings) {
+    function activatEvents(settings) {
+        $.each(settings.formFields, function () {
+            var field = $(this).prop('domid');
+            console.log(field);
+            var dom = $(field);
+            if ($(this).prop('callback') != null && $.isFunction($(this).prop('callback'))) {
+                $(this).prop('callback');
+            }
+        });
+    }
+
+    function style(settings, deleted) {
         settings.thisobject.find('.atlasTableContainer').find('table').addClass('atlasTable');
         settings.thisobject.find('.atlasTable').find('tr:odd').addClass('odd');
+        settings.thisobject.find('.atlasTable').find('tr:even').addClass('even');
+        var width = settings.thisobject.find('.atlasTable').css('width');
+        width = parseInt(width.replace('px', ''));
+        console.log(width);
+        if (width < 500) {
+            console.log(settings.thisobject.find('.atlasTable').find('tr:first-child').children('th'));
+            if (settings.thisobject.find('.atlasTable').find('tr:first-child').children('th').length > 4) {
+                settings.thisobject.find('.atlasTable').css('font-size', '0.9em');
+            }
+        }
+        if (!deleted)
+            page(settings);
     }
-    
+
+    function page(settings) {
+        var dsp = settings.displayAmount;
+        var rows = settings.thisobject.find('.atlasTable').find('tr:not(.head)');
+
+        settings.currentPage = 0;
+
+        // get the number of pages that contain the displayamounts per page
+        var pagecount = parseInt(rows.length / settings.displayAmount);
+        var dec = rows.length % settings.displayAmount;
+        if (dec > 0) pagecount++;
+        settings.rows = new Array(pagecount);
+
+        // initialize the arrays into arrays
+        for (var i = 0; i < pagecount; i++) settings.rows[i] = new Array();
+
+        // arbitrary counter
+        var rowct = 0;
+
+        // divide the rows array into the number of pages (the remaining extra will be on the last)
+        for (var i = 0; i < pagecount; i++)
+            for (var o = 0; o < dsp; o++)
+                if (rows[rowct] != null)
+                    settings.rows[i].push(rows[rowct++]);
+
+        // hide everything
+        for (var i = 0; i < pagecount; i++) {
+            $(settings.rows[i]).hide();
+        }
+
+        $(settings.rows[0]).fadeIn(300);
+
+        var pagecounter = "<div class='page-counter'><ul><li><</li>";
+
+        for (var i = 0; i < pagecount; i++) pagecounter += "<li>" + (i + 1) + "</li>";
+
+        pagecounter += "<li>></li></div>";
+        settings.thisobject.find('.atlasTableContainer').append('<div class="entry-count">1-10 of 10 entries</div>');
+        settings.thisobject.find('.atlasTableContainer').append(pagecounter);
+    }
+        
     var methods = {
         // =============================================================================
         // INITIALIZE - attach the plugin, attach events, attach css
@@ -598,6 +698,7 @@
             return object.each(function () {
                 var settings = $(this).data('tablesettings');
                 settings.thisobject = $(this);
+                console.log(settings);
                 $(this).css('width', settings.containerWidth + "%");
                 if (settings.containerWidth < 100)
                     $(this).css('margin', 'auto');
