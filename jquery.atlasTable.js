@@ -161,6 +161,9 @@
                             $(settings.rows[i]).hide();
                         $(settings.rows[page]).show();
                         settings.currentPage = page;
+                        var low = ((page+1) * settings.rows[page].length) - (settings.rows[page].length - 1);
+                        console.log(low);
+                        settings.thisobject.find('.atlasTableContainer .entry-count').html(low + '-' + (settings.rows[page].length * (settings.currentPage +1)) + ' of ' + settings.thisobject.find('.atlasTable tr:not(.head)').length + ' entries');
                     }
                     else console.log('you re on the same page');
                 });
@@ -652,6 +655,7 @@
     function page(settings) {
         var dsp = settings.displayAmount;
         var rows = settings.thisobject.find('.atlasTable').find('tr:not(.head)');
+        var allrows = settings.thisobject.find('.atlasTable').find('tr:not(.head)');
 
         settings.currentPage = 0;
 
@@ -685,7 +689,9 @@
         for (var i = 0; i < pagecount; i++) pagecounter += "<li>" + (i + 1) + "</li>";
 
         pagecounter += "<li>></li></div>";
-        settings.thisobject.find('.atlasTableContainer').append('<div class="entry-count">1-10 of 10 entries</div>');
+        settings.thisobject.find('.atlasTableContainer').append('<div class="entry-count"></div>');
+        settings.thisobject.find('.atlasTableContainer .entry-count').html(1 + '-' + settings.rows[0].length + ' of ' + allrows.length + ' entries');
+
         settings.thisobject.find('.atlasTableContainer').append(pagecounter);
     }
         

@@ -1,6 +1,13 @@
 ﻿body {
 }
 
+*
+{
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
 .atlasTable
 {
     width:100%;
@@ -14,12 +21,12 @@
     box-shadow:1px 1px 1px #b9b9b9;
     font-family: 'Open Sans', sans-serif;
     display:none;
+    table-layout:fixed
 }
 
 .atlasTableContainer
 {
-    min-height:200px;
-    min-width:500px;
+    min-height:110px;
     position:relative;
 }
 
@@ -62,26 +69,7 @@
     {
         margin-top:7px;
     }
-
-
-.isloading-wrapper
-{
-	background: url( 'img/239.gif' ) no-repeat;
-    background-position:center center;
-    min-height:45px;
-    width:45px;
-    top:50%;
-    margin-top:-22.5px !important;
-    position:absolute;
-    z-index:2;
-    display:inline-block;
-    margin:auto;
-}
-.isloading-overlay
-{
-    text-align:center;
-}
-
+    
 
     .atlasTable td
     {
@@ -90,6 +78,7 @@
         padding:4px;
         padding-left:6px;
         border-left:1px solid #8f8f8f;
+        word-wrap:break-word;
     }
 
         .atlasTable td:first-child
@@ -102,6 +91,7 @@
         background-color:#3ea4e8;
         color:white;
         font-size:1.15em;
+        word-wrap:break-word;
     }
 
         .atlasTable tr.head th
@@ -134,6 +124,10 @@
     {
         background-color:#b2e0ff;
     }
+    .atlasTable .even
+    {
+        background-color:white;
+    }
 
 
 .atlasModal .modalForm
@@ -154,6 +148,53 @@
     left:0;
     background-color:white;
 }
+
+.atlasTableContainer .entry-count
+{
+    font-size:0.85em;
+    padding:4px;
+    float:left;
+    margin-top:3px;
+    color:#555
+}
+
+.atlasTableContainer .page-counter
+{
+    background-color:#b2e0ff;
+    font-size:0.85em;
+    padding:5px;
+    margin:auto;
+    margin-top:3px;
+    border-radius:3px;
+    text-align:center;
+    width:auto;
+}
+
+    .atlasTableContainer .page-counter ul
+    {
+        margin:auto;
+        text-align:center;
+        list-style:none;
+        text-align:center;
+        padding:0;
+    }
+        .atlasTableContainer .page-counter ul li
+        {
+            margin:auto;
+            margin-left:2px;
+            display:inline-block;
+            width:15px;
+            height:15px;
+            background-color:white;
+        }
+            .atlasTableContainer .page-counter ul li:hover
+            {
+                cursor:pointer;
+                background-color:#2893e4;
+                color:white;
+            }
+
+
 /* ====================================================== */
 /* SYMBOLIC REPRESENTATIONS */
 /* ====================================================== */
@@ -292,6 +333,11 @@
         {
             background-color:#46b8f2;
             cursor:pointer;
+        }
+
+        .atlasModal .formBtn:active
+        {
+            margin-top:2px;
         }
 
     .atlasModal .cont
